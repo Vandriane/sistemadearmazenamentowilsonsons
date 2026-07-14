@@ -52,7 +52,7 @@ function Landing() {
               <ShieldAlert className="w-3.5 h-3.5" /> Gestão IMO • Estaleiro Wilson, Sons
             </span>
             <h2 className="text-3xl md:text-5xl font-bold text-navy-deep leading-tight">
-              Pátio inteligente para <span className="text-turquoise">contêineres IMO</span>
+              Sistema de Armazenamento de <span className="text-turquoise">Cargas IMO</span>
             </h2>
             <p className="text-muted-foreground text-base md:text-lg">
               Visualize o pátio em tempo real, receba sugestões de posições otimizadas por
