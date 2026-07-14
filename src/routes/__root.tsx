@@ -77,14 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Sistema de Armazenamento de Conteiners de Cargas IMO — Wilson, Sons" },
+      { name: "description", content: "Gestão visual do pátio de contêineres IMO do estaleiro Wilson, Sons com sugestão inteligente de posições." },
+      { name: "author", content: "KODIE Academy" },
+      { property: "og:title", content: "Sistema de Armazenamento IMO — Wilson, Sons" },
+      { property: "og:description", content: "Mapa interativo do pátio para armazenar contêineres IMO com foco em segurança e eficiência energética." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
