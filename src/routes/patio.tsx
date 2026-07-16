@@ -35,12 +35,8 @@ const ROWS = 8;
 const WEBHOOK = "https://hook.us2.make.com/9cbfjn7v44ebdbj9domn9csno5fxp3j0";
 
 const FORKLIFTS = [
-  { id: "conv", label: "Empilhadeira convencional (2–5 t)", energy: 1 },
-  { id: "pesada", label: "Empilhadeira pesada (10–25 t)", energy: 3 },
-  { id: "reach", label: "Reach Stacker", energy: 4 },
-  { id: "empty", label: "Empty Container Handler", energy: 2 },
-  { id: "tractor", label: "Terminal Tractor", energy: 2 },
-  { id: "guindaste", label: "Guindaste Móvel", energy: 5 },
+  { id: "eletrica", label: "Empilhadeira elétrica", energy: 1 },
+  { id: "glp", label: "Empilhadeira a gás GLP", energy: 2 },
 ];
 
 const IMO_RISKS = [
