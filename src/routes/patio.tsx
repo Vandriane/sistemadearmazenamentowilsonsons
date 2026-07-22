@@ -109,6 +109,38 @@ function Patio() {
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [records, setRecords] = useState<SheetRecord[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  const fetchRecords = useCallback(async () => {
+    setLoadingRecords(true);
+    setApiError(null);
+    try {
+      const res = await fetch(SHEETS_API, { method: "GET" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const list: SheetRecord[] = Array.isArray(data)
+        ? data
+        : Array.isArray((data as { records?: unknown }).records)
+          ? ((data as { records: SheetRecord[] }).records)
+          : Array.isArray((data as { data?: unknown }).data)
+            ? ((data as { data: SheetRecord[] }).data)
+            : [];
+      setRecords(list);
+    } catch (err) {
+      console.error(err);
+      setApiError("Não foi possível carregar os registros da planilha. Verifique sua conexão e tente novamente.");
+    } finally {
+      setLoadingRecords(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecords();
+    const t = setInterval(fetchRecords, 30000);
+    return () => clearInterval(t);
+  }, [fetchRecords]);
 
   useEffect(() => {
     const raw = localStorage.getItem("ws-operator");
