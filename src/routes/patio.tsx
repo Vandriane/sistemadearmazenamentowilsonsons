@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Anchor, LogOut, Truck, ShieldAlert, Clock, Zap, CheckCircle2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Anchor, LogOut, Truck, ShieldAlert, Clock, Zap, CheckCircle2, RefreshCw, Database, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/patio")({
   component: Patio,
