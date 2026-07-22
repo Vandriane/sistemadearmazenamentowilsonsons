@@ -232,11 +232,45 @@ function Patio() {
       zone: selected.zone,
     };
 
+    const recordId = `WS-${Date.now()}`;
+    const sheetPayload = {
+      ID: recordId,
+      "Contêiner": placement.containerCode,
+      "Entrada da Carga": placement.entryDate,
+      "Saída da Carga": placement.exitDate,
+      "Risco Químico": placement.imoRisk === "Risco Químico" ? "Sim" : "Não",
+      "Risco Biológico": placement.imoRisk === "Risco Biológico" ? "Sim" : "Não",
+      "Risco Físico": placement.imoRisk === "Risco Físico" ? "Sim" : "Não",
+      "Risco Ambiental": placement.imoRisk === "Risco Ambiental" ? "Sim" : "Não",
+      "Empilhadeira Elétrica": forklift === "eletrica" ? "Sim" : "Não",
+      "Empilhadeira a Gás": forklift === "glp" ? "Sim" : "Não",
+      Status: "Armazenado",
+      Observação: placement.observation,
+      Slot: placement.cellId,
+      Operador: operator.name,
+      Email: operator.email,
+      Timestamp: placement.timestamp,
+    };
+
+    let apiOk = true;
+    try {
+      const res = await fetch(SHEETS_API, {
+        method: "POST",
+        // text/plain evita preflight CORS no Apps Script
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(sheetPayload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      console.error(err);
+      apiOk = false;
+    }
+
     try {
       await fetch(WEBHOOK, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(placement),
+        body: JSON.stringify({ ...placement, sheetId: recordId }),
       });
     } catch {
       // webhook falhou; ainda registra localmente
@@ -253,7 +287,12 @@ function Patio() {
     setObservation("");
     setExitDate("");
     setSubmitting(false);
-    showToast(`Contêiner ${placement.containerCode} registrado no slot ${placement.cellId}.`);
+    showToast(
+      apiOk
+        ? `Contêiner ${placement.containerCode} registrado (ID ${recordId}).`
+        : `Registrado localmente. Falha ao gravar na planilha — verifique a conexão.`,
+    );
+    fetchRecords();
   }
 
   return (
