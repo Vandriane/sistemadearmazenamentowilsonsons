@@ -33,6 +33,22 @@ const COLS = 10;
 const ROWS = 8;
 
 const WEBHOOK = "https://hook.us2.make.com/umplnpq6f21h9rbqh9gntcers1gm1jog";
+const SHEETS_API = "https://script.google.com/macros/s/AKfycbwr5D-kAxjhhTof7faj6D23SjqA27yXAMKidJT_fMj8Jvq4iCrobrteUvEEZlrgu3l_qw/exec";
+
+type SheetRecord = {
+  ID?: string | number;
+  Contêiner?: string;
+  "Entrada da Carga"?: string;
+  "Saída da Carga"?: string;
+  "Risco Químico"?: string | boolean;
+  "Risco Biológico"?: string | boolean;
+  "Risco Físico"?: string | boolean;
+  "Risco Ambiental"?: string | boolean;
+  "Empilhadeira Elétrica"?: string | boolean;
+  "Empilhadeira a Gás"?: string | boolean;
+  Status?: string;
+  [key: string]: unknown;
+};
 
 const FORKLIFTS = [
   { id: "eletrica", label: "Empilhadeira elétrica", energy: 1 },
