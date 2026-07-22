@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Anchor, LogOut, Truck, ShieldAlert, Clock, Zap, CheckCircle2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Anchor, LogOut, Truck, ShieldAlert, Clock, Zap, CheckCircle2, RefreshCw, Database, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/patio")({
   component: Patio,
@@ -33,6 +33,22 @@ const COLS = 10;
 const ROWS = 8;
 
 const WEBHOOK = "https://hook.us2.make.com/umplnpq6f21h9rbqh9gntcers1gm1jog";
+const SHEETS_API = "https://script.google.com/macros/s/AKfycbwr5D-kAxjhhTof7faj6D23SjqA27yXAMKidJT_fMj8Jvq4iCrobrteUvEEZlrgu3l_qw/exec";
+
+type SheetRecord = {
+  ID?: string | number;
+  Contêiner?: string;
+  "Entrada da Carga"?: string;
+  "Saída da Carga"?: string;
+  "Risco Químico"?: string | boolean;
+  "Risco Biológico"?: string | boolean;
+  "Risco Físico"?: string | boolean;
+  "Risco Ambiental"?: string | boolean;
+  "Empilhadeira Elétrica"?: string | boolean;
+  "Empilhadeira a Gás"?: string | boolean;
+  Status?: string;
+  [key: string]: unknown;
+};
 
 const FORKLIFTS = [
   { id: "eletrica", label: "Empilhadeira elétrica", energy: 1 },
@@ -93,6 +109,38 @@ function Patio() {
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [records, setRecords] = useState<SheetRecord[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  const fetchRecords = useCallback(async () => {
+    setLoadingRecords(true);
+    setApiError(null);
+    try {
+      const res = await fetch(SHEETS_API, { method: "GET" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const list: SheetRecord[] = Array.isArray(data)
+        ? data
+        : Array.isArray((data as { records?: unknown }).records)
+          ? ((data as { records: SheetRecord[] }).records)
+          : Array.isArray((data as { data?: unknown }).data)
+            ? ((data as { data: SheetRecord[] }).data)
+            : [];
+      setRecords(list);
+    } catch (err) {
+      console.error(err);
+      setApiError("Não foi possível carregar os registros da planilha. Verifique sua conexão e tente novamente.");
+    } finally {
+      setLoadingRecords(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecords();
+    const t = setInterval(fetchRecords, 30000);
+    return () => clearInterval(t);
+  }, [fetchRecords]);
 
   useEffect(() => {
     const raw = localStorage.getItem("ws-operator");
@@ -184,11 +232,45 @@ function Patio() {
       zone: selected.zone,
     };
 
+    const recordId = `WS-${Date.now()}`;
+    const sheetPayload = {
+      ID: recordId,
+      "Contêiner": placement.containerCode,
+      "Entrada da Carga": placement.entryDate,
+      "Saída da Carga": placement.exitDate,
+      "Risco Químico": placement.imoRisk === "Risco Químico" ? "Sim" : "Não",
+      "Risco Biológico": placement.imoRisk === "Risco Biológico" ? "Sim" : "Não",
+      "Risco Físico": placement.imoRisk === "Risco Físico" ? "Sim" : "Não",
+      "Risco Ambiental": placement.imoRisk === "Risco Ambiental" ? "Sim" : "Não",
+      "Empilhadeira Elétrica": forklift === "eletrica" ? "Sim" : "Não",
+      "Empilhadeira a Gás": forklift === "glp" ? "Sim" : "Não",
+      Status: "Armazenado",
+      Observação: placement.observation,
+      Slot: placement.cellId,
+      Operador: operator.name,
+      Email: operator.email,
+      Timestamp: placement.timestamp,
+    };
+
+    let apiOk = true;
+    try {
+      const res = await fetch(SHEETS_API, {
+        method: "POST",
+        // text/plain evita preflight CORS no Apps Script
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(sheetPayload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      console.error(err);
+      apiOk = false;
+    }
+
     try {
       await fetch(WEBHOOK, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(placement),
+        body: JSON.stringify({ ...placement, sheetId: recordId }),
       });
     } catch {
       // webhook falhou; ainda registra localmente
@@ -205,7 +287,12 @@ function Patio() {
     setObservation("");
     setExitDate("");
     setSubmitting(false);
-    showToast(`Contêiner ${placement.containerCode} registrado no slot ${placement.cellId}.`);
+    showToast(
+      apiOk
+        ? `Contêiner ${placement.containerCode} registrado (ID ${recordId}).`
+        : `Registrado localmente. Falha ao gravar na planilha — verifique a conexão.`,
+    );
+    fetchRecords();
   }
 
   return (
@@ -294,7 +381,95 @@ function Patio() {
             <InfoCard icon={<ShieldAlert className="w-4 h-4" />} title="Segurança IMO" text="Cargas IMO devem ir para a faixa vermelha dedicada." />
             <InfoCard icon={<Clock className="w-4 h-4" />} title="Saída em 24h" text="Priorize a zona roxa para saídas urgentes." />
           </div>
+
+          <div className="glass rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Database className="w-5 h-5 text-turquoise" />
+              <h2 className="font-semibold text-navy-deep">Registros da planilha</h2>
+              <span className="text-xs text-muted-foreground">
+                {records.length} {records.length === 1 ? "registro" : "registros"}
+              </span>
+              <button
+                onClick={fetchRecords}
+                disabled={loadingRecords}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-muted disabled:opacity-50 transition"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingRecords ? "animate-spin" : ""}`} />
+                Atualizar
+              </button>
+            </div>
+
+            {apiError && (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 text-destructive p-2.5 text-xs mb-3">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{apiError}</span>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-border">
+                    <th className="py-2 pr-3">ID</th>
+                    <th className="py-2 pr-3">Contêiner</th>
+                    <th className="py-2 pr-3">Entrada</th>
+                    <th className="py-2 pr-3">Saída</th>
+                    <th className="py-2 pr-3">Riscos</th>
+                    <th className="py-2 pr-3">Empilhadeira</th>
+                    <th className="py-2 pr-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {records.length === 0 && !loadingRecords && !apiError && (
+                    <tr>
+                      <td colSpan={7} className="py-4 text-center text-muted-foreground">
+                        Nenhum registro encontrado.
+                      </td>
+                    </tr>
+                  )}
+                  {records.map((r, i) => {
+                    const isYes = (v: unknown) =>
+                      v === true || (typeof v === "string" && /^(sim|true|1|yes)$/i.test(v.trim()));
+                    const risks = [
+                      isYes(r["Risco Químico"]) && "Químico",
+                      isYes(r["Risco Biológico"]) && "Biológico",
+                      isYes(r["Risco Físico"]) && "Físico",
+                      isYes(r["Risco Ambiental"]) && "Ambiental",
+                    ].filter(Boolean).join(", ") || "—";
+                    const fork = [
+                      isYes(r["Empilhadeira Elétrica"]) && "Elétrica",
+                      isYes(r["Empilhadeira a Gás"]) && "Gás GLP",
+                    ].filter(Boolean).join(", ") || "—";
+                    const status = String(r.Status ?? "—");
+                    const statusColor = /armazen/i.test(status)
+                      ? "bg-zone-bom/60 text-navy-deep"
+                      : /sa[ií]da|liber/i.test(status)
+                        ? "bg-zone-saida/60 text-white"
+                        : /risco|alert/i.test(status)
+                          ? "bg-zone-imo/70 text-white"
+                          : "bg-muted text-muted-foreground";
+                    return (
+                      <tr key={String(r.ID ?? i)} className="border-b border-border/50 hover:bg-muted/40">
+                        <td className="py-2 pr-3 font-mono">{String(r.ID ?? "—")}</td>
+                        <td className="py-2 pr-3 font-medium">{String(r["Contêiner"] ?? "—")}</td>
+                        <td className="py-2 pr-3">{String(r["Entrada da Carga"] ?? "—")}</td>
+                        <td className="py-2 pr-3">{String(r["Saída da Carga"] ?? "—")}</td>
+                        <td className="py-2 pr-3">{risks}</td>
+                        <td className="py-2 pr-3">{fork}</td>
+                        <td className="py-2 pr-3">
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}>
+                            {status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
+
 
         <aside className="glass rounded-xl p-4 h-max sticky top-24">
           <h3 className="font-semibold text-navy-deep mb-1">Registrar armazenagem</h3>
