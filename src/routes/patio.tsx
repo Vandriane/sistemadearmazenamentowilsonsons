@@ -127,7 +127,15 @@ function Patio() {
           : Array.isArray((data as { data?: unknown }).data)
             ? ((data as { data: SheetRecord[] }).data)
             : [];
-      setRecords(list);
+      const sorted = [...list].sort((a, b) => {
+        const idA = a.ID ?? "";
+        const idB = b.ID ?? "";
+        const numA = typeof idA === "number" ? idA : Number.parseFloat(String(idA));
+        const numB = typeof idB === "number" ? idB : Number.parseFloat(String(idB));
+        if (!Number.isNaN(numA) && !Number.isNaN(numB)) return numB - numA;
+        return String(idB).localeCompare(String(idA));
+      });
+      setRecords(sorted);
     } catch (err) {
       console.error(err);
       setApiError("Não foi possível carregar os registros da planilha. Verifique sua conexão e tente novamente.");
