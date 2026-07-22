@@ -381,7 +381,95 @@ function Patio() {
             <InfoCard icon={<ShieldAlert className="w-4 h-4" />} title="Segurança IMO" text="Cargas IMO devem ir para a faixa vermelha dedicada." />
             <InfoCard icon={<Clock className="w-4 h-4" />} title="Saída em 24h" text="Priorize a zona roxa para saídas urgentes." />
           </div>
+
+          <div className="glass rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Database className="w-5 h-5 text-turquoise" />
+              <h2 className="font-semibold text-navy-deep">Registros da planilha</h2>
+              <span className="text-xs text-muted-foreground">
+                {records.length} {records.length === 1 ? "registro" : "registros"}
+              </span>
+              <button
+                onClick={fetchRecords}
+                disabled={loadingRecords}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-muted disabled:opacity-50 transition"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingRecords ? "animate-spin" : ""}`} />
+                Atualizar
+              </button>
+            </div>
+
+            {apiError && (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 text-destructive p-2.5 text-xs mb-3">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{apiError}</span>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-border">
+                    <th className="py-2 pr-3">ID</th>
+                    <th className="py-2 pr-3">Contêiner</th>
+                    <th className="py-2 pr-3">Entrada</th>
+                    <th className="py-2 pr-3">Saída</th>
+                    <th className="py-2 pr-3">Riscos</th>
+                    <th className="py-2 pr-3">Empilhadeira</th>
+                    <th className="py-2 pr-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {records.length === 0 && !loadingRecords && !apiError && (
+                    <tr>
+                      <td colSpan={7} className="py-4 text-center text-muted-foreground">
+                        Nenhum registro encontrado.
+                      </td>
+                    </tr>
+                  )}
+                  {records.map((r, i) => {
+                    const isYes = (v: unknown) =>
+                      v === true || (typeof v === "string" && /^(sim|true|1|yes)$/i.test(v.trim()));
+                    const risks = [
+                      isYes(r["Risco Químico"]) && "Químico",
+                      isYes(r["Risco Biológico"]) && "Biológico",
+                      isYes(r["Risco Físico"]) && "Físico",
+                      isYes(r["Risco Ambiental"]) && "Ambiental",
+                    ].filter(Boolean).join(", ") || "—";
+                    const fork = [
+                      isYes(r["Empilhadeira Elétrica"]) && "Elétrica",
+                      isYes(r["Empilhadeira a Gás"]) && "Gás GLP",
+                    ].filter(Boolean).join(", ") || "—";
+                    const status = String(r.Status ?? "—");
+                    const statusColor = /armazen/i.test(status)
+                      ? "bg-zone-bom/60 text-navy-deep"
+                      : /sa[ií]da|liber/i.test(status)
+                        ? "bg-zone-saida/60 text-white"
+                        : /risco|alert/i.test(status)
+                          ? "bg-zone-imo/70 text-white"
+                          : "bg-muted text-muted-foreground";
+                    return (
+                      <tr key={String(r.ID ?? i)} className="border-b border-border/50 hover:bg-muted/40">
+                        <td className="py-2 pr-3 font-mono">{String(r.ID ?? "—")}</td>
+                        <td className="py-2 pr-3 font-medium">{String(r["Contêiner"] ?? "—")}</td>
+                        <td className="py-2 pr-3">{String(r["Entrada da Carga"] ?? "—")}</td>
+                        <td className="py-2 pr-3">{String(r["Saída da Carga"] ?? "—")}</td>
+                        <td className="py-2 pr-3">{risks}</td>
+                        <td className="py-2 pr-3">{fork}</td>
+                        <td className="py-2 pr-3">
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}>
+                            {status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
+
 
         <aside className="glass rounded-xl p-4 h-max sticky top-24">
           <h3 className="font-semibold text-navy-deep mb-1">Registrar armazenagem</h3>
