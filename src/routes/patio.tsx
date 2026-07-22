@@ -32,7 +32,7 @@ type Placement = {
 const COLS = 10;
 const ROWS = 8;
 
-const WEBHOOK = "https://hook.us2.make.com/9cbfjn7v44ebdbj9domn9csno5fxp3j0";
+const WEBHOOK = "https://hook.us2.make.com/umplnpq6f21h9rbqh9gntcers1gm1jog";
 
 const FORKLIFTS = [
   { id: "eletrica", label: "Empilhadeira elétrica", energy: 1 },
