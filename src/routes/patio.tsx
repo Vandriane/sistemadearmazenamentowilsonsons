@@ -129,6 +129,8 @@ function Patio() {
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [exitDate, setExitDate] = useState("");
   const [observation, setObservation] = useState("");
+  const [weight, setWeight] = useState<number>(8);
+  const [detailPlacement, setDetailPlacement] = useState<Placement | null>(null);
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
