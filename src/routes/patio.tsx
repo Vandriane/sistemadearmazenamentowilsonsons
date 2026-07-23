@@ -64,6 +64,28 @@ const IMO_RISKS = [
   "Risco Operacional",
 ];
 
+const RISK_COLORS: Record<string, string> = {
+  "Risco Biológico": "#dc2626",
+  "Risco Químico": "#ea580c",
+  "Risco Físico": "#9333ea",
+  "Risco Ambiental": "#16a34a",
+  "Risco Operacional": "#0f766e",
+};
+
+function weightCategory(w: number) {
+  if (w <= 10) return { label: "Leve (0–10 t)", color: "#16a34a", short: "Leve" };
+  if (w <= 20) return { label: "Médio (10–20 t)", color: "#eab308", short: "Médio" };
+  if (w <= 28) return { label: "Pesado (20–28 t)", color: "#ea580c", short: "Pesado" };
+  return { label: "Próximo do limite (>28 t)", color: "#dc2626", short: "Limite" };
+}
+
+function recommendForklift(w: number) {
+  if (w <= 10) return { id: "eletrica", label: "Empilhadeira Elétrica", note: "Consumo mínimo, ideal para cargas leves.", alert: false };
+  if (w <= 20) return { id: "eletrica", label: "Preferência: Elétrica", note: "Elétrica preferida; GLP como alternativa.", alert: false };
+  if (w <= 28) return { id: "glp", label: "Empilhadeira a Gás GLP", note: "Peso exige empilhadeira GLP.", alert: false };
+  return { id: "glp", label: "GLP · Alerta operacional", note: "Peso próximo do limite — atenção redobrada.", alert: true };
+}
+
 const ZONE_META: Record<ZoneType, { label: string; color: string; desc: string }> = {
   otimo:   { label: "Ótimo",           color: "bg-zone-otimo",   desc: "Menor deslocamento e consumo" },
   bom:     { label: "Bom",             color: "bg-zone-bom",     desc: "Bom equilíbrio" },
