@@ -800,3 +800,12 @@ function InfoCard({ icon, title, text }: { icon: React.ReactNode; title: string;
     </div>
   );
 }
+
+function Row({ k, v }: { k: string; v: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-border/40 pb-1.5">
+      <dt className="text-xs text-muted-foreground">{k}</dt>
+      <dd className="text-sm font-medium text-navy-deep text-right">{v}</dd>
+    </div>
+  );
+}
