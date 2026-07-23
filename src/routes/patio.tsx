@@ -252,6 +252,7 @@ function Patio() {
       return;
     }
     setSubmitting(true);
+    const rec = recommendForklift(weight);
     const placement: Placement = {
       cellId: selected.id,
       containerCode: containerCode.trim().toUpperCase(),
@@ -263,7 +264,9 @@ function Patio() {
       observation: observation.trim(),
       timestamp: new Date().toISOString(),
       zone: selected.zone,
+      weight,
     };
+    void rec;
 
     const recordId = `WS-${Date.now()}`;
     const sheetPayload = {
