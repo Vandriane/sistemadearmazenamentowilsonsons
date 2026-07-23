@@ -27,6 +27,7 @@ type Placement = {
   observation: string;
   timestamp: string;
   zone: ZoneType;
+  weight: number;
 };
 
 const COLS = 10;
