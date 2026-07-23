@@ -378,22 +378,43 @@ function Patio() {
                   const meta = ZONE_META[cell.zone];
                   const isSuggested = suggestion?.id === cell.id && cell.zone !== "ocupado";
                   const isSelected = selected?.id === cell.id;
-                  const disabled = cell.zone === "ocupado";
+                  const occupied = cell.zone === "ocupado";
+                  const pl = occupied ? placements.find((p) => p.cellId === cell.id) : undefined;
+                  const forkBadge = pl ? (pl.forklift.toLowerCase().includes("elétr") ? "E" : "G") : null;
+                  const wcat = pl ? weightCategory(pl.weight) : null;
                   return (
                     <button
                       key={cell.id}
-                      disabled={disabled}
-                      onClick={() => setSelected(cell)}
-                      title={`${meta.label} · slot ${cell.id}${cell.containerCode ? ` · ${cell.containerCode}` : ""}`}
+                      onClick={() => {
+                        if (occupied && pl) setDetailPlacement(pl);
+                        else if (!occupied) setSelected(cell);
+                      }}
+                      title={`${meta.label} · slot ${cell.id}${cell.containerCode ? ` · ${cell.containerCode}` : ""}${pl ? ` · ${pl.weight}t` : ""}`}
                       className={[
                         "aspect-square rounded-md text-[10px] font-semibold text-navy-deep/90 relative transition",
                         meta.color,
-                        disabled ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.04] hover:shadow-md",
+                        "hover:scale-[1.04] hover:shadow-md",
                         isSelected ? "ring-4 ring-primary" : "",
                         isSuggested ? "ring-2 ring-turquoise animate-pulse" : "",
                       ].join(" ")}
                     >
                       <span className="absolute top-1 left-1 opacity-70">{cell.id}</span>
+                      {forkBadge && (
+                        <span
+                          className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                          style={{ background: forkBadge === "E" ? "#0ea5e9" : "#f59e0b" }}
+                          aria-label={forkBadge === "E" ? "Elétrica" : "GLP"}
+                        >
+                          {forkBadge}
+                        </span>
+                      )}
+                      {wcat && (
+                        <span
+                          className="absolute bottom-1 left-1 w-2.5 h-2.5 rounded-full border border-white/70"
+                          style={{ background: wcat.color }}
+                          aria-label={wcat.label}
+                        />
+                      )}
                       {cell.containerCode && (
                         <span className="absolute bottom-1 right-1 opacity-90 text-[9px]">
                           {cell.containerCode.slice(-4)}
@@ -412,6 +433,34 @@ function Patio() {
                   <span className="text-muted-foreground">{ZONE_META[k].label}</span>
                 </span>
               ))}
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-border/60">
+              <p className="text-[11px] font-semibold text-navy-deep mb-1.5">Peso do contêiner</p>
+              <div className="flex flex-wrap gap-3 text-xs">
+                {[
+                  { c: "#16a34a", l: "Leve (0–10 t)" },
+                  { c: "#eab308", l: "Médio (10–20 t)" },
+                  { c: "#ea580c", l: "Pesado (20–28 t)" },
+                  { c: "#dc2626", l: "Próximo do limite (>28 t)" },
+                ].map((w) => (
+                  <span key={w.l} className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ background: w.c }} />
+                    <span className="text-muted-foreground">{w.l}</span>
+                  </span>
+                ))}
+              </div>
+              <p className="text-[11px] font-semibold text-navy-deep mt-3 mb-1.5">Empilhadeira no mapa</p>
+              <div className="flex flex-wrap gap-3 text-xs">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-block w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: "#0ea5e9" }}>E</span>
+                  <span className="text-muted-foreground">Elétrica</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-block w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: "#f59e0b" }}>G</span>
+                  <span className="text-muted-foreground">Gás GLP</span>
+                </span>
+              </div>
             </div>
           </div>
 
