@@ -27,6 +27,7 @@ type Placement = {
   observation: string;
   timestamp: string;
   zone: ZoneType;
+  weight: number;
 };
 
 const COLS = 10;
@@ -62,6 +63,28 @@ const IMO_RISKS = [
   "Risco Ambiental",
   "Risco Operacional",
 ];
+
+const RISK_COLORS: Record<string, string> = {
+  "Risco Biológico": "#dc2626",
+  "Risco Químico": "#ea580c",
+  "Risco Físico": "#9333ea",
+  "Risco Ambiental": "#16a34a",
+  "Risco Operacional": "#0f766e",
+};
+
+function weightCategory(w: number) {
+  if (w <= 10) return { label: "Leve (0–10 t)", color: "#16a34a", short: "Leve" };
+  if (w <= 20) return { label: "Médio (10–20 t)", color: "#eab308", short: "Médio" };
+  if (w <= 28) return { label: "Pesado (20–28 t)", color: "#ea580c", short: "Pesado" };
+  return { label: "Próximo do limite (>28 t)", color: "#dc2626", short: "Limite" };
+}
+
+function recommendForklift(w: number) {
+  if (w <= 10) return { id: "eletrica", label: "Empilhadeira Elétrica", note: "Consumo mínimo, ideal para cargas leves.", alert: false };
+  if (w <= 20) return { id: "eletrica", label: "Preferência: Elétrica", note: "Elétrica preferida; GLP como alternativa.", alert: false };
+  if (w <= 28) return { id: "glp", label: "Empilhadeira a Gás GLP", note: "Peso exige empilhadeira GLP.", alert: false };
+  return { id: "glp", label: "GLP · Alerta operacional", note: "Peso próximo do limite — atenção redobrada.", alert: true };
+}
 
 const ZONE_META: Record<ZoneType, { label: string; color: string; desc: string }> = {
   otimo:   { label: "Ótimo",           color: "bg-zone-otimo",   desc: "Menor deslocamento e consumo" },
@@ -106,6 +129,8 @@ function Patio() {
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [exitDate, setExitDate] = useState("");
   const [observation, setObservation] = useState("");
+  const [weight, setWeight] = useState<number>(8);
+  const [detailPlacement, setDetailPlacement] = useState<Placement | null>(null);
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -227,6 +252,7 @@ function Patio() {
       return;
     }
     setSubmitting(true);
+    const rec = recommendForklift(weight);
     const placement: Placement = {
       cellId: selected.id,
       containerCode: containerCode.trim().toUpperCase(),
@@ -238,7 +264,9 @@ function Patio() {
       observation: observation.trim(),
       timestamp: new Date().toISOString(),
       zone: selected.zone,
+      weight,
     };
+    void rec;
 
     const recordId = `WS-${Date.now()}`;
     const sheetPayload = {
@@ -253,6 +281,9 @@ function Patio() {
       "Empilhadeira Elétrica": forklift === "eletrica" ? "Sim" : "Não",
       "Empilhadeira a Gás": forklift === "glp" ? "Sim" : "Não",
       Status: "Armazenado",
+      Peso: placement.weight,
+      "Categoria Peso": weightCategory(placement.weight).short,
+      "Empilhadeira Recomendada": recommendForklift(placement.weight).label,
       Observação: placement.observation,
       Slot: placement.cellId,
       Operador: operator.name,
@@ -347,22 +378,43 @@ function Patio() {
                   const meta = ZONE_META[cell.zone];
                   const isSuggested = suggestion?.id === cell.id && cell.zone !== "ocupado";
                   const isSelected = selected?.id === cell.id;
-                  const disabled = cell.zone === "ocupado";
+                  const occupied = cell.zone === "ocupado";
+                  const pl = occupied ? placements.find((p) => p.cellId === cell.id) : undefined;
+                  const forkBadge = pl ? (pl.forklift.toLowerCase().includes("elétr") ? "E" : "G") : null;
+                  const wcat = pl ? weightCategory(pl.weight) : null;
                   return (
                     <button
                       key={cell.id}
-                      disabled={disabled}
-                      onClick={() => setSelected(cell)}
-                      title={`${meta.label} · slot ${cell.id}${cell.containerCode ? ` · ${cell.containerCode}` : ""}`}
+                      onClick={() => {
+                        if (occupied && pl) setDetailPlacement(pl);
+                        else if (!occupied) setSelected(cell);
+                      }}
+                      title={`${meta.label} · slot ${cell.id}${cell.containerCode ? ` · ${cell.containerCode}` : ""}${pl ? ` · ${pl.weight}t` : ""}`}
                       className={[
                         "aspect-square rounded-md text-[10px] font-semibold text-navy-deep/90 relative transition",
                         meta.color,
-                        disabled ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.04] hover:shadow-md",
+                        "hover:scale-[1.04] hover:shadow-md",
                         isSelected ? "ring-4 ring-primary" : "",
                         isSuggested ? "ring-2 ring-turquoise animate-pulse" : "",
                       ].join(" ")}
                     >
                       <span className="absolute top-1 left-1 opacity-70">{cell.id}</span>
+                      {forkBadge && (
+                        <span
+                          className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                          style={{ background: forkBadge === "E" ? "#0ea5e9" : "#f59e0b" }}
+                          aria-label={forkBadge === "E" ? "Elétrica" : "GLP"}
+                        >
+                          {forkBadge}
+                        </span>
+                      )}
+                      {wcat && (
+                        <span
+                          className="absolute bottom-1 left-1 w-2.5 h-2.5 rounded-full border border-white/70"
+                          style={{ background: wcat.color }}
+                          aria-label={wcat.label}
+                        />
+                      )}
                       {cell.containerCode && (
                         <span className="absolute bottom-1 right-1 opacity-90 text-[9px]">
                           {cell.containerCode.slice(-4)}
@@ -381,6 +433,34 @@ function Patio() {
                   <span className="text-muted-foreground">{ZONE_META[k].label}</span>
                 </span>
               ))}
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-border/60">
+              <p className="text-[11px] font-semibold text-navy-deep mb-1.5">Peso do contêiner</p>
+              <div className="flex flex-wrap gap-3 text-xs">
+                {[
+                  { c: "#16a34a", l: "Leve (0–10 t)" },
+                  { c: "#eab308", l: "Médio (10–20 t)" },
+                  { c: "#ea580c", l: "Pesado (20–28 t)" },
+                  { c: "#dc2626", l: "Próximo do limite (>28 t)" },
+                ].map((w) => (
+                  <span key={w.l} className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ background: w.c }} />
+                    <span className="text-muted-foreground">{w.l}</span>
+                  </span>
+                ))}
+              </div>
+              <p className="text-[11px] font-semibold text-navy-deep mt-3 mb-1.5">Empilhadeira no mapa</p>
+              <div className="flex flex-wrap gap-3 text-xs">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-block w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: "#0ea5e9" }}>E</span>
+                  <span className="text-muted-foreground">Elétrica</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-block w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: "#f59e0b" }}>G</span>
+                  <span className="text-muted-foreground">Gás GLP</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -504,6 +584,32 @@ function Patio() {
             className="w-full rounded-md border border-border bg-background/70 px-2.5 py-2 text-sm mb-2 outline-none focus:ring-2 focus:ring-ring"
           />
 
+          <label className="text-xs font-medium">Peso do contêiner (toneladas)</label>
+          <input
+            type="number"
+            min={0}
+            max={40}
+            step={0.5}
+            value={weight}
+            onChange={(e) => setWeight(Math.max(0, Number(e.target.value) || 0))}
+            className="w-full rounded-md border border-border bg-background/70 px-2.5 py-2 text-sm mb-1 outline-none focus:ring-2 focus:ring-ring"
+          />
+          {(() => {
+            const wc = weightCategory(weight);
+            const rec = recommendForklift(weight);
+            return (
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-white" style={{ background: wc.color }}>
+                  ● {wc.label}
+                </span>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${rec.alert ? "bg-destructive text-destructive-foreground" : "bg-turquoise-soft text-navy-deep"}`}>
+                  {rec.alert && <AlertTriangle className="w-3 h-3" />} Recomendado: {rec.label}
+                </span>
+              </div>
+            );
+          })()}
+
+
           <label className="text-xs font-medium">Empilhadeira</label>
           <select
             value={forklift}
@@ -582,11 +688,98 @@ function Patio() {
         </aside>
       </main>
 
+      <section className="max-w-7xl mx-auto w-full px-4 md:px-6 pb-8">
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldAlert className="w-5 h-5 text-turquoise" />
+            <h2 className="font-semibold text-navy-deep">Guia Operacional</h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p className="font-semibold text-navy-deep mb-2">Riscos IMO</p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { c: "#dc2626", l: "Biológico" },
+                  { c: "#ea580c", l: "Químico" },
+                  { c: "#9333ea", l: "Físico" },
+                  { c: "#16a34a", l: "Ambiental" },
+                ].map((r) => (
+                  <span key={r.l} className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ background: r.c }} />
+                    <span className="text-muted-foreground">{r.l}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="font-semibold text-navy-deep mb-2">Peso do contêiner</p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { c: "#16a34a", l: "0–10 t" },
+                  { c: "#eab308", l: "10–20 t" },
+                  { c: "#ea580c", l: "20–28 t" },
+                  { c: "#dc2626", l: ">28 t" },
+                ].map((w) => (
+                  <span key={w.l} className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ background: w.c }} />
+                    <span className="text-muted-foreground">{w.l}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {detailPlacement && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setDetailPlacement(null)}
+        >
+          <div
+            className="glass rounded-2xl p-5 w-full max-w-sm shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Truck className="w-5 h-5 text-turquoise" />
+              <h3 className="font-semibold text-navy-deep">Detalhes do contêiner</h3>
+              <button
+                onClick={() => setDetailPlacement(null)}
+                className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+              >
+                Fechar ✕
+              </button>
+            </div>
+            {(() => {
+              const p = detailPlacement;
+              const wc = weightCategory(p.weight);
+              const rec = recommendForklift(p.weight);
+              return (
+                <dl className="text-sm space-y-2">
+                  <Row k="Número do contêiner" v={p.containerCode} />
+                  <Row k="Slot" v={p.cellId} />
+                  <Row k="Peso atual" v={`${p.weight} t`} />
+                  <Row k="Categoria do peso" v={<span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: wc.color }} />{wc.label}</span>} />
+                  <Row k="Classe IMO" v={p.imoRisk} />
+                  <Row k="Tipo de risco" v={<span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: RISK_COLORS[p.imoRisk] ?? "#64748b" }} />{p.imoRisk}</span>} />
+                  <Row k="Empilhadeira usada" v={p.forklift} />
+                  <Row k="Recomendação" v={<span className={rec.alert ? "text-destructive font-semibold" : ""}>{rec.label}</span>} />
+                  {rec.alert && (
+                    <p className="text-[11px] text-destructive flex items-center gap-1 mt-1"><AlertTriangle className="w-3 h-3" /> {rec.note}</p>
+                  )}
+                </dl>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 rounded-lg grad-navy text-white px-4 py-2.5 text-sm shadow-xl">
           {toast}
         </div>
       )}
+
 
       <footer className="grad-navy text-white/90">
         <div className="max-w-7xl mx-auto px-6 py-4 text-sm text-center">
@@ -604,6 +797,15 @@ function InfoCard({ icon, title, text }: { icon: React.ReactNode; title: string;
         {icon}{title}
       </div>
       <p className="text-xs text-muted-foreground mt-1">{text}</p>
+    </div>
+  );
+}
+
+function Row({ k, v }: { k: string; v: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-border/40 pb-1.5">
+      <dt className="text-xs text-muted-foreground">{k}</dt>
+      <dd className="text-sm font-medium text-navy-deep text-right">{v}</dd>
     </div>
   );
 }
