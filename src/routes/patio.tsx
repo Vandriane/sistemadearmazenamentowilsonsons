@@ -464,6 +464,27 @@ function Patio() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { key: "Risco Biológico", color: "#dc2626", emoji: "🔴", desc: "Agentes patogênicos, resíduos hospitalares e materiais infectantes." },
+              { key: "Risco Químico",   color: "#ea580c", emoji: "🟠", desc: "Substâncias corrosivas, inflamáveis, tóxicas ou reativas." },
+              { key: "Risco Físico",    color: "#9333ea", emoji: "🟣", desc: "Radiação, alta pressão, temperaturas extremas e ruído intenso." },
+              { key: "Risco Ambiental", color: "#16a34a", emoji: "🟢", desc: "Poluentes marinhos, resíduos ecotóxicos e materiais contaminantes." },
+            ].map((r) => (
+              <div
+                key={r.key}
+                className="rounded-xl p-3 text-white shadow-md border border-white/20"
+                style={{ background: `linear-gradient(135deg, ${r.color}, color-mix(in oklab, ${r.color} 65%, #0f172a))` }}
+              >
+                <div className="flex items-center gap-2 font-semibold text-sm">
+                  <span aria-hidden>{r.emoji}</span>
+                  <span>{r.key}</span>
+                </div>
+                <p className="text-[11px] mt-1 text-white/90 leading-snug">{r.desc}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="grid sm:grid-cols-3 gap-3">
             <InfoCard icon={<Zap className="w-4 h-4" />} title="Eficiência" text="Slots próximos ao portão consomem menos energia da empilhadeira." />
             <InfoCard icon={<ShieldAlert className="w-4 h-4" />} title="Segurança IMO" text="Cargas IMO devem ir para a faixa vermelha dedicada." />
