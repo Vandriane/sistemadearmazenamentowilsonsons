@@ -464,6 +464,27 @@ function Patio() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { key: "Risco Biológico", color: "#dc2626", emoji: "🔴", desc: "Agentes patogênicos, resíduos hospitalares e materiais infectantes." },
+              { key: "Risco Químico",   color: "#ea580c", emoji: "🟠", desc: "Substâncias corrosivas, inflamáveis, tóxicas ou reativas." },
+              { key: "Risco Físico",    color: "#9333ea", emoji: "🟣", desc: "Radiação, alta pressão, temperaturas extremas e ruído intenso." },
+              { key: "Risco Ambiental", color: "#16a34a", emoji: "🟢", desc: "Poluentes marinhos, resíduos ecotóxicos e materiais contaminantes." },
+            ].map((r) => (
+              <div
+                key={r.key}
+                className="rounded-xl p-3 text-white shadow-md border border-white/20"
+                style={{ background: `linear-gradient(135deg, ${r.color}, color-mix(in oklab, ${r.color} 65%, #0f172a))` }}
+              >
+                <div className="flex items-center gap-2 font-semibold text-sm">
+                  <span aria-hidden>{r.emoji}</span>
+                  <span>{r.key}</span>
+                </div>
+                <p className="text-[11px] mt-1 text-white/90 leading-snug">{r.desc}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="grid sm:grid-cols-3 gap-3">
             <InfoCard icon={<Zap className="w-4 h-4" />} title="Eficiência" text="Slots próximos ao portão consomem menos energia da empilhadeira." />
             <InfoCard icon={<ShieldAlert className="w-4 h-4" />} title="Segurança IMO" text="Cargas IMO devem ir para a faixa vermelha dedicada." />
@@ -694,7 +715,8 @@ function Patio() {
             <ShieldAlert className="w-5 h-5 text-turquoise" />
             <h2 className="font-semibold text-navy-deep">Guia Operacional</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-4 text-xs">
+
+          <div className="grid md:grid-cols-2 gap-4 text-xs mb-5">
             <div>
               <p className="font-semibold text-navy-deep mb-2">Riscos IMO</p>
               <div className="flex flex-wrap gap-3">
@@ -728,8 +750,96 @@ function Patio() {
               </div>
             </div>
           </div>
+
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
+            {[
+              {
+                key: "Risco Biológico", color: "#dc2626", emoji: "🔴",
+                items: [
+                  "Resíduos hospitalares infectantes",
+                  "Amostras clínicas e laboratoriais",
+                  "Tecidos e órgãos humanos/animais",
+                  "Culturas de microrganismos patogênicos",
+                  "Materiais contaminados com sangue",
+                  "Vacinas e imunobiológicos",
+                  "Descarte de agulhas e perfurocortantes",
+                  "Carcaças animais de zonas quarentenárias",
+                  "Efluentes de biotérios",
+                  "Roupas hospitalares contaminadas",
+                ],
+              },
+              {
+                key: "Risco Químico", color: "#ea580c", emoji: "🟠",
+                items: [
+                  "Ácido sulfúrico e ácido clorídrico",
+                  "Soda cáustica (hidróxido de sódio)",
+                  "Solventes inflamáveis (acetona, tolueno)",
+                  "Combustíveis (diesel, gasolina, GLP)",
+                  "Peróxidos orgânicos",
+                  "Agrotóxicos e defensivos agrícolas",
+                  "Cloro industrial e hipoclorito",
+                  "Amônia anidra",
+                  "Tintas e vernizes inflamáveis",
+                  "Baterias de lítio e chumbo-ácido",
+                ],
+              },
+              {
+                key: "Risco Físico", color: "#9333ea", emoji: "🟣",
+                items: [
+                  "Material radioativo (urânio, césio)",
+                  "Fontes seladas para radiografia industrial",
+                  "Gases sob alta pressão (cilindros)",
+                  "Nitrogênio e oxigênio líquidos criogênicos",
+                  "Cargas com temperatura elevada",
+                  "Explosivos industriais e pirotecnia",
+                  "Munições e cargas militares",
+                  "Fibras minerais (asbesto)",
+                  "Equipamentos emissores de radiação ionizante",
+                  "Materiais magnéticos de alta intensidade",
+                ],
+              },
+              {
+                key: "Risco Ambiental", color: "#16a34a", emoji: "🟢",
+                items: [
+                  "Óleos lubrificantes usados",
+                  "Poluentes marinhos (marine pollutants)",
+                  "Resíduos de PCB (askarel)",
+                  "Metais pesados (mercúrio, cádmio)",
+                  "Lâmpadas fluorescentes descartadas",
+                  "Pesticidas organoclorados",
+                  "Resíduos eletrônicos (e-waste)",
+                  "Escória industrial contaminada",
+                  "Rejeitos de mineração",
+                  "Substâncias que empobrecem a camada de ozônio",
+                ],
+              },
+            ].map((cat) => (
+              <div
+                key={cat.key}
+                className="rounded-xl p-3 border border-border/60 bg-card/60"
+                style={{ borderTop: `4px solid ${cat.color}` }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span aria-hidden>{cat.emoji}</span>
+                  <p className="font-semibold text-navy-deep text-sm">{cat.key}</p>
+                </div>
+                <ul className="space-y-1 text-[11px] text-muted-foreground">
+                  {cat.items.map((it) => (
+                    <li key={it} className="flex items-start gap-1.5">
+                      <span
+                        className="inline-block w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
+                        style={{ background: cat.color }}
+                      />
+                      <span>{it}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
+
 
       {detailPlacement && (
         <div
