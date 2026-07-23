@@ -688,11 +688,98 @@ function Patio() {
         </aside>
       </main>
 
+      <section className="max-w-7xl mx-auto w-full px-4 md:px-6 pb-8">
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldAlert className="w-5 h-5 text-turquoise" />
+            <h2 className="font-semibold text-navy-deep">Guia Operacional</h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p className="font-semibold text-navy-deep mb-2">Riscos IMO</p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { c: "#dc2626", l: "Biológico" },
+                  { c: "#ea580c", l: "Químico" },
+                  { c: "#9333ea", l: "Físico" },
+                  { c: "#16a34a", l: "Ambiental" },
+                ].map((r) => (
+                  <span key={r.l} className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ background: r.c }} />
+                    <span className="text-muted-foreground">{r.l}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="font-semibold text-navy-deep mb-2">Peso do contêiner</p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { c: "#16a34a", l: "0–10 t" },
+                  { c: "#eab308", l: "10–20 t" },
+                  { c: "#ea580c", l: "20–28 t" },
+                  { c: "#dc2626", l: ">28 t" },
+                ].map((w) => (
+                  <span key={w.l} className="inline-flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ background: w.c }} />
+                    <span className="text-muted-foreground">{w.l}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {detailPlacement && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setDetailPlacement(null)}
+        >
+          <div
+            className="glass rounded-2xl p-5 w-full max-w-sm shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Truck className="w-5 h-5 text-turquoise" />
+              <h3 className="font-semibold text-navy-deep">Detalhes do contêiner</h3>
+              <button
+                onClick={() => setDetailPlacement(null)}
+                className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+              >
+                Fechar ✕
+              </button>
+            </div>
+            {(() => {
+              const p = detailPlacement;
+              const wc = weightCategory(p.weight);
+              const rec = recommendForklift(p.weight);
+              return (
+                <dl className="text-sm space-y-2">
+                  <Row k="Número do contêiner" v={p.containerCode} />
+                  <Row k="Slot" v={p.cellId} />
+                  <Row k="Peso atual" v={`${p.weight} t`} />
+                  <Row k="Categoria do peso" v={<span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: wc.color }} />{wc.label}</span>} />
+                  <Row k="Classe IMO" v={p.imoRisk} />
+                  <Row k="Tipo de risco" v={<span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: RISK_COLORS[p.imoRisk] ?? "#64748b" }} />{p.imoRisk}</span>} />
+                  <Row k="Empilhadeira usada" v={p.forklift} />
+                  <Row k="Recomendação" v={<span className={rec.alert ? "text-destructive font-semibold" : ""}>{rec.label}</span>} />
+                  {rec.alert && (
+                    <p className="text-[11px] text-destructive flex items-center gap-1 mt-1"><AlertTriangle className="w-3 h-3" /> {rec.note}</p>
+                  )}
+                </dl>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 rounded-lg grad-navy text-white px-4 py-2.5 text-sm shadow-xl">
           {toast}
         </div>
       )}
+
 
       <footer className="grad-navy text-white/90">
         <div className="max-w-7xl mx-auto px-6 py-4 text-sm text-center">
