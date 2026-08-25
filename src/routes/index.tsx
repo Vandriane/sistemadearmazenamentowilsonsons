@@ -49,12 +49,11 @@ function Landing() {
     { color: "var(--zone-bom)", title: "Bom", desc: "Equilíbrio acesso/custo" },
     { color: "var(--zone-medio)", title: "Médio", desc: "Requer mais deslocamento" },
     { color: "var(--zone-saida)", title: "Saída Rápida 24h", desc: "Corredor de urgência" },
-    { color: "var(--zone-imo)", title: "Risco IMO", desc: "Cargas perigosas" },
     { color: "var(--zone-ocupado)", title: "Zona Ocupada", desc: "Célula com contêiner" },
-    { color: "#dc2626", title: "Risco Biológico", desc: "Agentes patogênicos e biocontaminantes" },
-    { color: "#ea580c", title: "Risco Químico", desc: "Substâncias corrosivas ou tóxicas" },
-    { color: "#9333ea", title: "Risco Físico", desc: "Materiais radioativos ou pressurizados" },
-    { color: "#16a34a", title: "Risco Ambiental", desc: "Poluentes marinhos e ecotóxicos" },
+    { color: "#dc2626", title: "Carga Imo - Risco Biológico", desc: "Agentes patogênicos e biocontaminantes" },
+    { color: "#ea580c", title: "Carga Imo - Risco Químico", desc: "Substâncias corrosivas ou tóxicas" },
+    { color: "#9333ea", title: "Carga Imo - Risco Físico", desc: "Materiais radioativos ou pressurizados" },
+    { color: "#16a34a", title: "Carga Imo - Risco Ambiental", desc: "Poluentes marinhos e ecotóxicos" },
   ];
 
   return (
