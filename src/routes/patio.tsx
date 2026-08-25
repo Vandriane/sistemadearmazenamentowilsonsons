@@ -427,7 +427,7 @@ function Patio() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              {(Object.keys(ZONE_META) as ZoneType[]).map((k) => (
+              {((Object.keys(ZONE_META) as ZoneType[]).filter((k) => k !== "imo")).map((k) => (
                 <span key={k} className="inline-flex items-center gap-1.5">
                   <span className={`inline-block w-3.5 h-3.5 rounded ${ZONE_META[k].color}`}></span>
                   <span className="text-muted-foreground">{ZONE_META[k].label}</span>
