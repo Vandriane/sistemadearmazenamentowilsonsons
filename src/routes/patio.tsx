@@ -104,8 +104,6 @@ function buildInitialGrid(): Cell[] {
       if (c <= 1) zone = "otimo";
       else if (c <= 3) zone = "bom";
       else if (c >= 8) zone = "medio";
-      // faixa IMO (afastada, mas acessível) — colunas 5-6, linhas 0-3
-      if ((c === 5 || c === 6) && r <= 3) zone = "imo";
       // saída rápida 24h — última linha, colunas 0-3
       if (r === ROWS - 1 && c <= 3) zone = "saida";
       // algumas células já ocupadas
